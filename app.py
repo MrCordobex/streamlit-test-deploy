@@ -2,6 +2,8 @@ import streamlit as st
 import os
 from datetime import datetime, date
 from PIL import Image
+from pillow_heif import register_heif_opener
+register_heif_opener()
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
@@ -133,10 +135,10 @@ else:
     if os.path.exists(ruta_carpeta):
         archivos = os.listdir(ruta_carpeta)
         for archivo in archivos:
-            if archivo.startswith(f"{dia}."):
+            # Convertimos el nombre a minúsculas para comparar
+            if archivo.lower().startswith(f"{dia}."):
                 foto_encontrada = os.path.join(ruta_carpeta, archivo)
                 break
-    
     st.divider()
     
     if foto_encontrada:
