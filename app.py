@@ -16,46 +16,7 @@ st.set_page_config(
 )
 
 # # --- ESTILOS CSS (CSS HACKING PARA MEJORAR LA ESTÉTICA) ---
-# st.markdown("""
-#     <style>
-#     /* Centrar títulos */
-#     .main-title {
-#         text-align: center;
-#         font-family: 'Helvetica', sans-serif;
-#         color: #ff4b4b;
-#         font-size: 3em;
-#         font-weight: bold;
-#     }
-#     .sub-title {
-#         text-align: center;
-#         font-family: 'Helvetica', sans-serif;
-#         color: #555;
-#         font-size: 1.5em;
-#         margin-bottom: 20px;
-#     }
-#     /* Estilo del título de la canción */
-#     .song-title {
-#         text-align: center;
-#         font-family: 'Helvetica', sans-serif;
-#         color: #333;
-#         font-size: 1.3em;
-#         font-weight: bold;
-#         margin-top: 20px;
-#         margin-bottom: 10px;
-#     }
-#     /* Estilo del contenedor de la foto */
-#     .stImage {
-#         border-radius: 15px;
-#         box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-#     }
-#     /* Estilo para el desplegable de instrucciones */
-#     .streamlit-expanderHeader {
-#         font-weight: bold;
-#         color: #ff4b4b;
-#     }
-#     </style>
-# """, unsafe_allow_html=True)
-# --- ESTILOS CSS (ESTILO LIMPIO + EFECTO POLAROID) ---
+# --- ESTILOS CSS (ESTILO LIMPIO + POLAROID + POST-IT) ---
 st.markdown("""
     <style>
     /* Centrar títulos */
@@ -73,7 +34,6 @@ st.markdown("""
         font-size: 1.5em;
         margin-bottom: 20px;
     }
-    /* Estilo del título de la canción */
     .song-title {
         text-align: center;
         font-family: 'Helvetica', sans-serif;
@@ -84,27 +44,50 @@ st.markdown("""
         margin-bottom: 10px;
     }
 
-    /* --- NUEVO: EFECTO POLAROID --- */
-    /* Apuntamos a la imagen exacta para ponerle el marco blanco */
+    /* EFECTO POLAROID */
     div[data-testid="stImage"] img {
-        border: 12px solid #ffffff; /* Marco blanco lateral y superior */
-        border-bottom: 40px solid #ffffff; /* Marco inferior más grueso (donde se escribe) */
-        box-shadow: 3px 3px 10px rgba(0,0,0,0.2); /* Sombra para dar profundidad */
-        transform: rotate(-1.5deg); /* Pequeña inclinación "desenfadada" */
-        border-radius: 2px; /* El papel fotográfico apenas tiene esquinas redondeadas */
-        transition: transform 0.3s ease; /* Suaviza el movimiento si le pasas el ratón */
+        border: 12px solid #ffffff;
+        border-bottom: 40px solid #ffffff;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+        transform: rotate(-1.5deg);
+        border-radius: 2px;
+        transition: transform 0.3s ease;
     }
-
-    /* Opcional: que se enderece un poco al pasar el ratón */
     div[data-testid="stImage"] img:hover {
         transform: rotate(0deg) scale(1.01);
     }
-    /* ----------------------------- */
 
-    /* Estilo para el desplegable de instrucciones */
+    /* Estilo para el desplegable */
     .streamlit-expanderHeader {
         font-weight: bold;
         color: #ff4b4b;
+    }
+
+    /* --- NUEVO: EL POST-IT AMARILLO --- */
+    .postit {
+        position: fixed;
+        bottom: 80px; /* Lo subimos para que no lo tape la barra del móvil */
+        right: 20px; /* Lo movemos a la DERECHA para que no lo tape el menú lateral */
+        width: 140px;
+        background-color: #ffeb3b;
+        padding: 15px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        transform: rotate(-2deg); /* Lo giramos al otro lado */
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: #333;
+        z-index: 999999; /* Z-index exagerado para asegurar que salga encima de todo */
+        text-align: center;
+        border-radius: 2px;
+        border: 1px solid #e6db55; /* Un borde sutil queda mejor */
+    }
+    /* Ocultar post-it en móviles muy pequeños si molesta (opcional) */
+    @media (max-width: 640px) {
+        .postit {
+            width: 100px;
+            font-size: 11px;
+            padding: 10px;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -186,6 +169,30 @@ with st.sidebar:
 mes_nombre = fecha_seleccionada.strftime("%B")
 nombres_meses_es = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 mes_esp = nombres_meses_es[fecha_seleccionada.month]
+
+# --- NUEVO: BARRA DE PROGRESO ---
+# 1. Calculamos el día del año (ej: día 4 de 366)
+dia_anio = fecha_seleccionada.timetuple().tm_yday
+dias_totales_anio = 366 if fecha_seleccionada.year % 4 == 0 else 365
+porcentaje = dia_anio / dias_totales_anio
+
+# 2. Texto de la barra (Menos ñoño, más limpio)
+st.caption(f"Capítulo {dia_anio} de {dias_totales_anio}")
+st.progress(porcentaje)
+
+# --- NUEVO: POST-IT (DÍAS JUNTOS) ---
+fecha_inicio = date(2019, 12, 7) # Vuestra fecha
+dias_juntos = (hoy - fecha_inicio).days # Cálculo de días
+
+st.markdown(f"""
+    <div class='postit'>
+        <b>Días Juntitos:</b><br>
+        <span style='font-size: 20px'>{dias_juntos}</span>
+        <br>❤️
+    </div>
+""", unsafe_allow_html=True)
+
+# -------------------------------
 
 st.markdown(f"<div class='main-title'>Nuestros recuerdos</div>", unsafe_allow_html=True)
 st.markdown(f"<div class='sub-title'>Fotito del <b>{fecha_seleccionada.day} de {mes_esp}</b></div>", unsafe_allow_html=True)
