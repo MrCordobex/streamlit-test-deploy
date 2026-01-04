@@ -225,6 +225,26 @@ else:
     if foto_encontrada:
         image = Image.open(foto_encontrada)
         st.image(image, use_column_width=True)
+
+        # =========================================================
+        # NUEVO: CRINGE-O-METRO (Antes del video)
+        # =========================================================
+        st.write("") # Un poco de aire
+        st.markdown("**🧐 ¿Qué nota le damos al outfit/careto?**")
+        
+        # El slider va de 0 a 100, empieza en 50. 'collapsed' oculta la etiqueta fea de arriba
+        rating = st.slider("Puntúa:", 0, 100, 50, label_visibility="collapsed")
+        
+        if rating < 20:
+            st.warning("🤢 Madre de dios...  Pedro borra esto, por favor")
+        elif rating < 50:
+            st.info("😅 Bueno, se intentó. No es nuestro mejor día")
+        elif rating < 80:
+            st.success("😎 Ni tan mal ehhhhh. Tenemos rollito")
+        else:
+            st.success("🔥 ¡DIOSES DEL OLIMPO! Vaya fotón")
+        
+        # =========================================================
         
         # --- AQUI VA LA MÚSICA ---
         link_cancion = musica_por_mes.get(fecha_seleccionada.month)
