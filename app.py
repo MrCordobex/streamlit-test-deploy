@@ -18,39 +18,54 @@ st.set_page_config(
 )
 
 # ==========================================
-# 🧠 CEREBRO: CONEXIÓN CON GITHUB (BASE DE DATOS)
+# 🧠 CEREBRO: CONEXIÓN CON GITHUB (MODO DEBUG)
 # ==========================================
 def gestionar_votos(mes, dia, nuevo_voto=None):
     try:
-        # 1. Conectamos con GitHub usando el secreto
+        # 1. Intentamos leer el secreto
+        if "GITHUB_TOKEN" not in st.secrets:
+            st.error("❌ ERROR: No encuentro el GITHUB_TOKEN en los secretos de Streamlit.")
+            return 50
+            
         token = st.secrets["GITHUB_TOKEN"]
         g = Github(token)
         
-        # ⚠️⚠️ CAMBIA ESTO POR TU USUARIO Y NOMBRE DE REPO ⚠️⚠️
-        repo = g.get_user().get_repo("MrCordobex/streamlit-test-deploy") 
+        # 2. Intentamos conectar con el repo
+        # AQUI ES DONDE SUELE FALLAR: Asegúrate de que este nombre es EXACTO
+        nombre_repo = "MrCordobex/calendario-ana" # <--- CAMBIA ESTO POR TU NOMBRE REAL SI ES OTRO
         
-        contents = repo.get_contents("votos.json")
+        try:
+            repo = g.get_user().get_repo(nombre_repo)
+        except Exception:
+            st.error(f"❌ ERROR: No encuentro el repositorio '{nombre_repo}'. Revisa el nombre o los permisos del Token.")
+            return 50
+
+        # 3. Intentamos leer el archivo
+        try:
+            contents = repo.get_contents("votos.json")
+            datos = json.loads(contents.decoded_content.decode())
+        except Exception as e:
+            st.error(f"❌ ERROR LEYENDO JSON: {e}. ¿Creaste el archivo votos.json en GitHub con {{}} dentro?")
+            return 50
         
-        # 2. Descargamos el archivo actual
-        datos = json.loads(contents.decoded_content.decode())
+        clave = f"{mes}_{dia}"
         
-        clave = f"{mes}_{dia}" # Ej: "1_4" para el 4 de Enero
-        
-        # SI HAY NUEVO VOTO: Guardamos y subimos
+        # 4. Intentamos escribir
         if nuevo_voto is not None:
             datos[clave] = nuevo_voto
-            # Actualizamos el archivo en GitHub
-            repo.update_file(contents.path, f"Voto dia {clave}", json.dumps(datos), contents.sha)
-            return nuevo_voto
+            try:
+                repo.update_file(contents.path, f"Voto dia {clave}", json.dumps(datos), contents.sha)
+                return nuevo_voto
+            except Exception as e:
+                st.error(f"❌ ERROR ESCRIBIENDO: {e}. ¿Tu Token tiene permiso 'repo' completo?")
+                return 50
             
-        # SI NO HAY VOTO: Solo leemos
         else:
-            return datos.get(clave, 50) # Si no existe, devuelve 50 por defecto
+            return datos.get(clave, 50)
 
     except Exception as e:
-        print(f"Error base de datos (ignorar si estás en local): {e}")
+        st.error(f"❌ ERROR GENERAL: {e}")
         return 50
-
 # # --- ESTILOS CSS (CSS HACKING PARA MEJORAR LA ESTÉTICA) ---
 # --- ESTILOS CSS (ESTILO LIMPIO + POLAROID + POST-IT) ---
 st.markdown("""
