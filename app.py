@@ -32,7 +32,7 @@ def gestionar_votos(mes, dia, nuevo_voto=None):
         
         # 2. Intentamos conectar con el repo
         # AQUI ES DONDE SUELE FALLAR: Asegúrate de que este nombre es EXACTO
-        nombre_repo = "MrCordobex/calendario-ana" # <--- CAMBIA ESTO POR TU NOMBRE REAL SI ES OTRO
+        nombre_repo = "MrCordobex/streamlit-test-deploy" # <--- CAMBIA ESTO POR TU NOMBRE REAL SI ES OTRO
         
         try:
             repo = g.get_user().get_repo(nombre_repo)
