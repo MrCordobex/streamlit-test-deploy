@@ -118,7 +118,7 @@ musica_por_mes = {
 nombres_meses_es = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
 # ==========================================
-# 📊 PÁGINA DE ESTADÍSTICAS (MODIFICADA V2)
+# 📊 PÁGINA DE ESTADÍSTICAS (CORREGIDO ORDEN)
 # ==========================================
 def ver_estadisticas():
     st.markdown(f"<div class='main-title'>📊 Estadísticas</div>", unsafe_allow_html=True)
@@ -131,29 +131,25 @@ def ver_estadisticas():
     # 2. Selector de Filtro
     filtro = st.selectbox("¿Qué quieres analizar?", ["Todo el Año"] + names_meses_slice)
     
-    # 3. Definir Rango de Fechas (Inicio - Fin)
-    # Calculamos el rango real hasta "hoy" para rellenar huecos
+    # 3. Definir Rango de Fechas
     anio_actual = hoy.year
     
     if filtro == "Todo el Año":
         start_date = date(anio_actual, 1, 1)
-        end_date = hoy # Hasta hoy
+        end_date = hoy 
         titulo_grafica = "Evolución de notas del Año"
     else:
         mes_idx = nombres_meses_es.index(filtro)
         
-        # Si el mes seleccionado es futuro (ej: Febrero y estamos en Enero)
         if mes_idx > hoy.month:
             st.warning(f"¡Aún no hemos llegado a {filtro}! Paciencia viajera del tiempo.")
             return
             
         start_date = date(anio_actual, mes_idx, 1)
         
-        # El fin es HOY si estamos en ese mes, o el último día del mes si ya pasó
         if mes_idx == hoy.month:
             end_date = hoy
         else:
-            # Calcular último día del mes (truco rápido)
             if mes_idx == 12:
                 end_date = date(anio_actual, 12, 31)
             else:
@@ -161,25 +157,19 @@ def ver_estadisticas():
                 
         titulo_grafica = f"Evolución de notas en {filtro}"
 
-    # 4. Generar DataFrame con TODAS las fechas (Relleno de huecos)
-    # Creamos un rango completo de fechas desde inicio hasta fin
+    # 4. Generar DataFrame
     rango_fechas = pd.date_range(start=start_date, end=end_date)
-    
     df = pd.DataFrame(rango_fechas, columns=['Fecha'])
     
-    # Función para buscar la nota en tu JSON (que usa formato "mes_dia")
     def buscar_nota(fecha):
         clave = f"{fecha.month}_{fecha.day}"
-        return raw_data.get(clave, None) # Devuelve None si no hay dato
+        return raw_data.get(clave, None)
 
-    # Aplicamos la búsqueda
     df['Nota'] = df['Fecha'].apply(buscar_nota)
-    
-    # AQUI ESTÁ LA MAGIA: Rellenar los None con 50
     df['Nota'] = df['Nota'].fillna(50)
     
-    # 5. Formatear Eje X bonito ("1 de Enero")
-    # Creamos una columna texto para que Streamlit la pinte tal cual
+    # Creamos la columna Día solo para los textos de abajo (mejor/peor foto), 
+    # pero NO la usaremos para la gráfica.
     def formatear_fecha(fecha):
         mes_nombre = nombres_meses_es[fecha.month]
         return f"{fecha.day} de {mes_nombre}"
@@ -190,29 +180,23 @@ def ver_estadisticas():
     media = df['Nota'].mean()
     df['Media'] = media
     
-    # Usamos 'Día' como índice para que salga en el eje X
     st.caption(f"📈 {titulo_grafica} (Media: {media:.1f})")
     
-    # Pintamos usando 'Día' en el eje X
-    st.line_chart(df, x='Día', y=['Nota', 'Media'], color=["#ff4b4b", "#888888"])
+    # --- CAMBIO IMPORTANTE AQUÍ ---
+    # Usamos x='Fecha' en vez de 'Día' para que se ordene cronológicamente
+    st.line_chart(df, x='Fecha', y=['Nota', 'Media'], color=["#ff4b4b", "#888888"])
 
     st.divider()
 
     # --- ZONA DE HONOR Y HORROR ---
-    # Solo buscamos mejor/peor si hay al menos una nota real (distinta de 50 o si el 50 es real)
-    # Para evitar que salga el día 1 con nota 50 como "mejor foto" si no hay datos,
-    # filtramos un poco o asumimos que el relleno cuenta.
-    
     col_best, col_worst = st.columns(2)
     
     # --- 🏆 LA MEJOR FOTO ---
     with col_best:
         st.markdown("<h3 style='text-align: center; color: #4CAF50;'>🏆 La Mejor</h3>", unsafe_allow_html=True)
-        # Buscamos el máximo
         idx_max = df['Nota'].idxmax()
         mejor_row = df.loc[idx_max]
         
-        # Recuperamos fecha real para buscar la foto
         f_mejor = mejor_row['Fecha']
         carpeta = mapa_carpetas.get(f_mejor.month)
         ruta = os.path.join("Fotos", carpeta)
@@ -226,6 +210,7 @@ def ver_estadisticas():
         
         if archivo_best:
             st.image(Image.open(archivo_best), caption=f"Nota: {mejor_row['Nota']}", use_column_width=True)
+            # Aquí sí usamos la columna 'Día' porque es texto para leer
             st.success(f"{mejor_row['Día']}")
         else:
             st.info("Sin foto ganadora aún")
